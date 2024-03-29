@@ -44,6 +44,7 @@ public class Plot : MonoBehaviour
         if(_xAxis.labelCount != xTicks || _xAxis.minValue != xmin || _xAxis.maxValue != xmax)
         {
             _xAxis.UpdateAxis(xmin, xmax, xTicks, Vector2.right);
+
         }
        
 
