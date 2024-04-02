@@ -7,86 +7,49 @@ using UnityEngine.Rendering;
 using UnityEngine.UI;
 using static UnityEditor.PlayerSettings;
 
-public class DataPoint
+public class DataPoint //handles plotted points (want to eventually include a line plot class)
 {
-    [SerializeField] private GameObject dotPrototype;
-    private GameObject singlePoint;
-    public GameObject[] allPoints;
-    [SerializeField] private GameObject DataParent;
-    [SerializeField] private float size;
-    [SerializeField] private UnityEngine.Color color;
-    [SerializeField] private Vector2 position;
-    private Vector3[] canvasCorners;
-    private xAxis _xAxis;
-    private yAxis _yAxis;
-    private float xoffset = 0;
-    private float yoffset = 0;
-    private float xScaleFactor;
-    private float yScaleFactor;
-    private float xRange;
-    private float yRange;
-    private float containerWidth;
-    private float containerHeight;
+    [SerializeField] private GameObject dotPrototype; //prototype for datapoints
+    [SerializeField] private GameObject DataParent; //parent for datapoints
+    public GameObject[] allPoints; //list containing all the points
+
+    public Axis[] Axes = new Axis[2]; //axes to plot on, given by Plot.cs 
+    public Axis xAxis;
+    public Axis yAxis;
+
     protected RectTransform containerTransform;
-    // Start is called before the first frame update
-    void Start()
-    {
-        //CreatePoint();
-        //SetParameters(singlePoint, position, size, color);
-    }
 
 
-    // Update is called once per frame
-    void Update()
-    {/*
-        if(Points.Length!= 0)
-        {
-            if (Points[Points.Length - 1].transform.position.x != position.x || Points[Points.Length - 1].transform.position.y != position.y)
-            {
-                Points[0].transform.position = position;
-            }
-        }*/
-
-    }
-
-
-    public DataPoint(int numofPts)
+    public DataPoint(int numofPts) //only constructor that only specifies the number of points 
     {
         allPoints = new GameObject[numofPts];
         for (int i = 0; i < numofPts; i++)
         {
             allPoints[i] = CreatePoint();
-
         }
     }
-    public DataPoint(Vector2[] Points, float[] sizes, UnityEngine.Color[] colors)
+    public DataPoint(Axis[] Axes, Vector2[] Points, float[] sizes, UnityEngine.Color[] colors) //constructor allowing for each point to have different sizes and colors
     {
-
-        //CreatePoint();
-        //SetParameters(singlePoint, position, size, color);
-        PlotPoints(Points, sizes, colors);
+        PlotPoints(Axes, Points, sizes, colors);
     }
-    public DataPoint(Vector2[] Points, float size, UnityEngine.Color color)
+    public DataPoint(Axis[] Axes, Vector2[] Points, float size, UnityEngine.Color color) //constructor for when all points have the same size and color
     {
-
-        //CreatePoint();
-        //SetParameters(singlePoint, position, size, color);
-        PlotPoints(Points, size, color);
+        PlotPoints(Axes, Points, size, color);
     }
 
-    public void PlotPoints(Vector2[] Points, float[] sizes, UnityEngine.Color[] colors)
+    public void PlotPoints(Axis[] Axes, Vector2[] Points, float[] sizes, UnityEngine.Color[] colors) //plots the points on the given axes (for when each point has a different size/color)
     {
-        InitGameObjs();
-        allPoints = new GameObject[Points.Length];
+        InitGameObjs(Axes);
+        allPoints = new GameObject[Points.Length+1];
         for (int i=0; i < Points.Length; i++)
         {
             allPoints[i] = CreatePoint();
             SetParameters(allPoints[i], Points[i], sizes[i], colors[i]);
         }
     }
-    public void PlotPoints(Vector2[] Points, float size, UnityEngine.Color color)
+    public void PlotPoints(Axis[] Axes, Vector2[] Points, float size, UnityEngine.Color color)//plots the points on the given axes (for when each point has the same size/color)
     {
-        InitGameObjs();
+        InitGameObjs(Axes);
         allPoints = new GameObject[Points.Length];
         for (int i = 0; i < Points.Length; i++)
         {
@@ -94,82 +57,57 @@ public class DataPoint
             SetParameters(allPoints[i], Points[i], size, color);
         }
     }
-    public void InitGameObjs()
+    public void InitGameObjs(Axis[] Axes) //get all the needed objects
     {
-        canvasCorners = new Vector3[4];
-        DataParent = GameObject.FindGameObjectWithTag("DataPoints");
-        dotPrototype = GameObject.FindGameObjectWithTag("datapointPrototype");
-        containerTransform = GameObject.FindGameObjectWithTag("GraphContainer").GetComponent<RectTransform>();
-        containerTransform.GetWorldCorners(canvasCorners); //corners gives rendered worldspace points; width or sizedelta give screenspace (local?)
-        _xAxis = GameObject.FindGameObjectWithTag("Axes").GetComponent<xAxis>();
-        _yAxis = GameObject.FindGameObjectWithTag("Axes").GetComponent<yAxis>();
-        RefreshParams();
-
+        DataParent = Globals.Instance.DataParent;
+        dotPrototype = Globals.Instance.dotPrototype;
+        containerTransform = Globals.Instance.containerRectTrans;
+      
+        xAxis = Axes[0];
+        yAxis = Axes[1];
 
     }
-    public void RefreshParams()
+
+    public GameObject CreatePoint()//spawns a point but doesnt do anything with it besides parent it 
     {
-        xRange = _xAxis.maxValue - _xAxis.minValue;
-        yRange = _yAxis.maxValue - _yAxis.minValue;
-        containerWidth = canvasCorners[2].x - canvasCorners[0].x;
-        containerHeight = canvasCorners[1].y - canvasCorners[0].y;
-        xScaleFactor = containerWidth / xRange;
-        yScaleFactor = containerHeight / yRange;
-    }
-    public GameObject CreatePoint()
-    {
-        Debug.Log(dotPrototype);
-        dotPrototype.SetActive(true) ;
-        //InitGameObjs();
         GameObject pt = GameObject.Instantiate(dotPrototype, DataParent.transform);
-        dotPrototype.SetActive(false);
         return pt;
     }
-    public void SetParameters(GameObject pt, Vector2 pos, float size, UnityEngine.Color col)
+    public void SetParameters(GameObject pt, Vector2 pos, float size, UnityEngine.Color col) //set the position, size, and color of 1 datapoint
     {
-        //if(singlePoint != null)
+        SetPosition(pt, pos);
+        SetScale(pt, size);
+        SetColor(pt, col);        
+    }
+    public void SetPosition(GameObject pt, Vector2 pos) //sets position of 1 datapoint
+    {
+        pt.transform.position = Globals.Instance.PositionFromAxisSpace(pos);
+    }
+
+    public void SetPositions(Vector2[] pos) //set the position for every datapoint (i.e. for animation or plotting a time-dependant function)
+    {
+        for(int i = 0; i < allPoints.Length; i++)
         {
-            RefreshParams();
-            SetPosition(pt, pos);
-            SetScale(pt, size);
-            SetColor(pt, col);
-        }
-        
+            allPoints[i].transform.position = Globals.Instance.PositionFromAxisSpace(pos[i]);
+        }  
     }
-    public void SetPosition(GameObject pt, Vector2 pos)
-    {
-        pt.transform.position = PositionFromGraphSpace(pos);
-    }
-    public void SetPositions(GameObject[] pt, Vector2[] pos)
-    {
-        for(int i = 0; i < pt.Length; i++)
-        {
-            pt[i].transform.position = PositionFromGraphSpace(pos[i]);
-        }
-        
-    }
-    public void SetScale(GameObject pt, float size)
+    public void SetScale(GameObject pt, float size) //set the size for 1 points
     {
         pt.transform.localScale = size*Vector2.one ;
     }
-    public void SetColor(GameObject pt, UnityEngine.Color col)
+    public void SetColor(GameObject pt, UnityEngine.Color col) //set color for 1 point
     {
         Image dotimage = pt.GetComponent<Image>();
         dotimage.color = col;
     }
 
-    public Vector2 PositionFromGraphSpace(Vector2 pos)
+    public void UpdateNumberOfPoints(Axis[] Axes, Vector2[] Points, float size, UnityEngine.Color color) //if the number of points to plot changes at runtime, clear the old points and make the new ones
     {
-        Vector2 offsetL = canvasCorners[0];
-        Vector2 offsetR = canvasCorners[1];
-        Vector2 mins = new Vector2(_xAxis.minValue, _yAxis.minValue);
-        Vector2 maxs = new Vector2(_xAxis.maxValue, _yAxis.maxValue);
-        Vector2 scaleFactors = new Vector2(xScaleFactor, yScaleFactor);
-        //Vector2 finalpos2 = pos - _xAxis.minValue; 
+        for (int i = 0; i < allPoints.Length; i++)
+        {
+            GameObject.Destroy(allPoints[i]);
+        }
+        PlotPoints(Axes, Points, size, color);
         
-        Vector2 finalPosL = offsetL + Vector2.Scale((pos - mins), scaleFactors);
-        Vector2 finalPosR = offsetR + Vector2.Scale((pos + maxs), scaleFactors);
-        Debug.Log((finalPosL, finalPosR));
-        return finalPosL;
     }
 }
