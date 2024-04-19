@@ -29,7 +29,7 @@ public class UniversalGraviation : MonoBehaviour
         public float mass;
     };
 
-    void Start()
+    void Awake()
     {
         //Get all the masses in the scene
         bodies = GameObject.FindObjectsOfType<Rigidbody>();
@@ -50,14 +50,18 @@ public class UniversalGraviation : MonoBehaviour
             {
                 for (int k = 0; k < S; k++)
                 {
-                    points[i,j,k] += new Vector3(i*xSpacing, j*ySpacing, k*zSpacing) + spacingOffsetScale * Random.insideUnitSphere; //initial position, a site on a cubic grid + some random offset
-                    
+                    points[i,j,k] += new Vector3((i-S/2)*xSpacing, (j - S / 2) *ySpacing, (k - S / 2) *zSpacing) + spacingOffsetScale * Random.insideUnitSphere; //initial position, a site on a cubic grid + some random offset
                     //Get 'i'th rigidbody, set its initial position, velocity, and mass
                     Rigidbody body = bodies[bodyNum];
                     body.GetComponent<TrailRenderer>().enabled = false; //disable trails before before setting positions to avoid a mess of trals on start
                     body.position = points[i, j, k];
                     body.mass *= massScale * Random.value;
-                    body.velocity = initialVelocityScale * Random.insideUnitSphere;
+                    //body.velocity = initialVelocityScale * Random.insideUnitSphere;
+                    //body.velocity = -initialVelocityScale * VelocityField.VectorFieldFromPotential(VelocityField.Potential, points[i,j,k], 0.01f);
+                    float x = points[i, j, k].x;
+                    float y = points[i, j, k].y;
+                    float z = points[i, j, k].z;
+                    body.velocity = VelocityField.VectorField(- z,  x, -y) /10;
 
                     //Create a Particle struct, set its position and mass
                     Particles[bodyNum] = new Particle();  
@@ -133,7 +137,8 @@ public class UniversalGraviation : MonoBehaviour
         gravCompShader.SetFloat("numberofParticles", Particles.Length);
 
         //Number of work groups to make
-        int numWorkGroups = Mathf.CeilToInt(Particles.Length / (8*8));
+        //int numWorkGroups = Mathf.CeilToInt(Particles.Length / (8*8));
+        int numWorkGroups = 1;
         //Get the shader to execute (im understanding this as something like calling the CSMain "method", with the stated number of workgroups)
         gravCompShader.Dispatch(kernal,numWorkGroups,numWorkGroups,numWorkGroups);
 
