@@ -1,0 +1,37 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+int numberofParticles;
+
+struct Particle
+{
+    float3 position;
+    float mass;
+};
+
+RWStructuredBuffer<Particle> particles; //Particle data sent from CPU
+RWStructuredBuffer<float3> output; //net force on each particle sent back to CPU
+
+//Calculate the total gravitational force on each particle from every other particle
+[numthreads(8,8,8)] //at time of writing: there are 8x8x8 particles in the scene, so this seems the most natural
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    uint bufferID = id.x + 8*(id.y + 8*id.z); //"flatten" 3D array indices to 1D: [x,y,z] = x + d*y + d*h*z (h = height [size of array in y], d = depth [size of array in z])
+    Particle thisParticle = particles[bufferID]; //get the 'i'th particle in the buffer
+
+    float3 netField = 0;
+
+    for(int j = 0; j < numberofParticles; j++)
+    {
+        if(thisParticle.position.x != particles[j].position.x || thisParticle.position.y != particles[j].position.y || thisParticle.position.z != particles[j].position.z) //ensures we dont get the force of a particle on itself (infinity)
+        {
+            float3 dist = particles[j].position - thisParticle.position;
+            float3 dir = normalize(dist);
+            netField += particles[j].mass / (dot(dist,dist)) * dir; // F = G M m / r^2, G is stored in CPU, m is mass of the jth partcile, 
+                                                                    //  m /r^2 is done in this line, which makes this a gravitational field rather than a force
+        }
+
+    }
+
+    output[bufferID] =  thisParticle.mass*netField; // F = G M m / r^2, multiplying by M turns the field into a force
+}

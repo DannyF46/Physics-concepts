@@ -18,7 +18,10 @@ public class DataPoint //handles plotted points (want to eventually include a li
     public Axis yAxis;
 
     protected RectTransform containerTransform;
+    public DataPoint() //only constructor
+    {
 
+    }
 
     public DataPoint(int numofPts) //only constructor that only specifies the number of points 
     {
@@ -79,6 +82,7 @@ public class DataPoint //handles plotted points (want to eventually include a li
         SetScale(pt, size);
         SetColor(pt, col);        
     }
+
     public void SetPosition(GameObject pt, Vector2 pos) //sets position of 1 datapoint
     {
         pt.transform.position = Globals.Instance.PositionFromAxisSpace(pos);
@@ -91,23 +95,52 @@ public class DataPoint //handles plotted points (want to eventually include a li
             allPoints[i].transform.position = Globals.Instance.PositionFromAxisSpace(pos[i]);
         }  
     }
+    public Vector2[] GetPositions()
+    {
+        Vector2[] CurrentPoints = new Vector2[allPoints.Length];
+        for (int i = 0; i < allPoints.Length; i++)
+        {
+            CurrentPoints[i] = allPoints[i].transform.position;
+        }
+        return CurrentPoints;
+    }
     public void SetScale(GameObject pt, float size) //set the size for 1 points
     {
         pt.transform.localScale = size*Vector2.one ;
+    }
+    public void SetScales(float size) //set the size for all points
+    {
+        for (int i = 0; i < allPoints.Length; i++)
+        {
+            SetScale(allPoints[i], size);
+        }
+        
     }
     public void SetColor(GameObject pt, UnityEngine.Color col) //set color for 1 point
     {
         Image dotimage = pt.GetComponent<Image>();
         dotimage.color = col;
     }
+    public void SetColors (UnityEngine.Color col) //set the size for all points
+    {
+        for (int i = 0; i < allPoints.Length; i++)
+        {
+            SetColor(allPoints[i], col);
+        }
 
+    }
     public void UpdateNumberOfPoints(Axis[] Axes, Vector2[] Points, float size, UnityEngine.Color color) //if the number of points to plot changes at runtime, clear the old points and make the new ones
+    {
+        ClearPoints();
+        PlotPoints(Axes, Points, size, color);
+    }
+    public void ClearPoints() //if the number of points to plot changes at runtime, clear the old points and make the new ones
     {
         for (int i = 0; i < allPoints.Length; i++)
         {
             GameObject.Destroy(allPoints[i]);
+            
         }
-        PlotPoints(Axes, Points, size, color);
-        
+
     }
 }
