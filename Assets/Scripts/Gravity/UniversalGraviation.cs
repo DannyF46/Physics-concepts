@@ -19,7 +19,7 @@ public class UniversalGraviation : MonoBehaviour
     [SerializeField] private float massScale = 1f; //level of mass variation 
 
     public ComputeShader gravCompShader; //compute shader will be responsible for doing the force calculations on the GPU. We then apply the forces on the CPU (here)
-    public Particle[] Particles; //Particle data that will be sent to GPU
+    public Particle[] Particles { get; private set; } //Particle data that will be sent to GPU
     private Vector3[] netForces; //array that will recieve the net forces from the GPU
 
     //struct that will contain the particle data to send to the compute shader
@@ -61,7 +61,7 @@ public class UniversalGraviation : MonoBehaviour
                     float x = points[i, j, k].x;
                     float y = points[i, j, k].y;
                     float z = points[i, j, k].z;
-                    body.velocity = VelocityField.VectorField(- z,  x, -y) /10;
+                    body.velocity = initialVelocityScale*VelocityField.VectorField(- z,  -x, -y) /10;
 
                     //Create a Particle struct, set its position and mass
                     Particles[bodyNum] = new Particle();  
