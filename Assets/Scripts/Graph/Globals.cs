@@ -1,9 +1,9 @@
 using JetBrains.Annotations;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor;
+//using UnityEditor;
 using UnityEngine;
-[InitializeOnLoad]
+//[InitializeOnLoad]
 public class Globals : MonoBehaviour //make some frequently-used objects/methods globally accessable (so we don't need to constantly re-call things like FindGameObjectWithTag)
 {
 

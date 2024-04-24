@@ -1,8 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.EditorTools;
+//using UnityEditor.EditorTools;
 using UnityEngine;
-[ExecuteAlways]
+//[ExecuteAlways]
 public class CoM : MonoBehaviour
 {
     private GameObject[] collisionObjects;

@@ -15,6 +15,7 @@ public class FlipNormals : MonoBehaviour
 
         mesh.triangles = mesh.triangles.Reverse().ToArray(); //reverse triangles
         mesh.normals = mesh.normals.Select(n => -n).ToArray(); //invert normals
+        meshCol.sharedMesh = mesh;
     }
 
 

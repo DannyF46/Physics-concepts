@@ -48,8 +48,8 @@ public static class VelocityField
         float y = position.y;
         float z = position.z;
 
-        float potential = x*y + y*z + z*x;
-        return potential/100;
+        float potential = position.sqrMagnitude;
+        return potential;
 
     }
 }
